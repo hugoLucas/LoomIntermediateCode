@@ -5,6 +5,9 @@ public class Main {
     public static void main(String [] args){
         Game currentGame = new Game();
 
+        /**********************************************************************************************************
+         ***********************************Intermediate Code Goes Here********************************************
+         **********************************************************************************************************/
 
         Game.Node node_0 = new Game.Node("$pg_five","you pack your wagon");
         node_0.addOption("$e", "head east");
@@ -28,6 +31,14 @@ public class Main {
         currentGame.addLinkToGame("node_1", "$b", "node_5");
         currentGame.addLinkToGame("node_4", "$c", "node_2");
         currentGame.addLinkToGame("node_5", "$d", "node_2");
+        currentGame.connectSections("node_2", "node_0");
+        currentGame.setStart("$pg_one");
 
+        /**********************************************************************************************************
+         ***********************************Intermediate Code Goes Here********************************************
+         **********************************************************************************************************/
+
+        GameDriver driver = new GameDriver(currentGame);
+        driver.start();
     }
 }
