@@ -9,20 +9,33 @@ import java.util.Scanner;
 public class GameDriver {
 
     private Game baseGame;
+    private Game.Node testNode;
 
-    public GameDriver (Game input){
+    private static final String DIVIDER = "---------------------------------------------------------------------------";
+
+    public GameDriver (Game input, Game.Node testNode){
         this.baseGame = input;
+        this.testNode = testNode;
     }
 
     public void start(){
         int stop = 10;
-        String currentSection = baseGame.getStart();
-        while(stop > 0){
-            System.out.print(baseGame.getNodeContents(currentSection));
-            int opNum = this.listenForResponse(baseGame.getCurrentNodeNumberOfOptions(currentSection));
-            String opId = baseGame.trackHistory(currentSection, opNum);
-            currentSection = baseGame.nextNode(currentSection, opId);
-            stop --;
+
+        Game.Node currentNode = baseGame.getStart();
+        // Game.Node currentNode = this.testNode;
+        while(currentNode != null){
+            System.out.print(baseGame.getNodeContents(currentNode));
+
+            String optionId = null;
+            if(!currentNode.hasTransferLink() && currentNode.getNumberOfOptions() > 0) {
+                int opNum = this.listenForResponse(baseGame.getCurrentNodeNumberOfOptions(currentNode));
+                optionId = baseGame.trackHistory(currentNode, opNum);
+            }else if(currentNode.hasTransferLink())
+                System.out.println(DIVIDER + "\n" + DIVIDER + "\n");
+            else
+                System.out.println("END OF GAME");
+
+            currentNode = baseGame.nextNode(currentNode, optionId);
         }
     }
 

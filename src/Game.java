@@ -26,9 +26,9 @@ public class Game {
         gameNodes.get(nodeIntermediateIdentifier).addLink(nodeOptionIdentifier, nodeSourceIntermediateIdentifier);
     }
 
-    public String trackHistory(String id, int op){
-        String optionId = this.getNodeByID(id).nThOption(op);
-        this.currentGamePath.add(id, optionId);
+    public String trackHistory(Node currentNode, int op){
+        String optionId = currentNode.nThOption(op);
+        this.currentGamePath.add(currentNode, optionId);
         return optionId;
     }
 
@@ -40,18 +40,17 @@ public class Game {
         this.setStartSection = id;
     }
 
-    public String getStart(){
-        return this.setStartSection;
+    public Node getStart(){
+        return this.getNodeByID(this.setStartSection);
     }
 
-    public String getNodeContents(String nodeName){
-        Node currentNode = this.getNodeByID(nodeName);
+    public String getNodeContents(Node currentNode){
         return currentNode.getNodeTextPrompt() + "\n" +
-                currentNode.getNodeOptions() + "\n";
+                currentNode.getNodeOptions(currentGamePath) + "\n";
     }
 
-    public int getCurrentNodeNumberOfOptions(String nodeName){
-        return this.getNodeByID(nodeName).getNumberOfOptions();
+    public int getCurrentNodeNumberOfOptions(Node currentNode){
+        return currentNode.getNumberOfOptions();
     }
 
     public Node getNodeByID(String id){
@@ -61,9 +60,10 @@ public class Game {
         return null;
     }
 
-    public String nextNode(String nodeName, String optionSelected){
-        Node currentNode = this.getNodeByID(nodeName);
-        return this.gameNodes.get(currentNode.traverseLink(optionSelected)).getNodeIdentifier();
+    public Node nextNode(Node currentNode, String optionSelected){
+        if(optionSelected != null)
+            return this.gameNodes.get(currentNode.traverseLink(optionSelected));
+        return this.gameNodes.get(currentNode.getTransferLink());
     }
 
     public static class Node{
@@ -77,6 +77,8 @@ public class Game {
         /* <OptionIdentifier, NodeIdentifier> */
         private HashMap<String, String> nodeLinks;
 
+        private HashMap<String, String> ifOption;
+
         public Node(String id, String text){
             this.nodeIdentifier = id;
             this.nodeTextPrompt = text;
@@ -84,10 +86,17 @@ public class Game {
             this.transferLink = null;
             this.optionMap = new HashMap<>();
             this.nodeLinks = new HashMap<>();
+            this.ifOption = new HashMap<>();
         }
 
         public void addOption(String id, String text){
             this.optionMap.put(id, text);
+            this.ifOption.put(id, null);
+        }
+
+        public void addIfOption(String id, String text, String conditionalOption, String conditionalOptionSource){
+            this.addOption(id, text);
+            this.ifOption.put(id, conditionalOption + "," + conditionalOptionSource);
         }
 
         public void addLink(String opId, String nodeId){
@@ -106,14 +115,25 @@ public class Game {
             return this.nodeTextPrompt;
         }
 
-        public String getNodeOptions(){
+        public String getNodeOptions(GameHistory currentGamePath){
             StringBuilder gen = new StringBuilder();
 
             int index = 1;
-            for(String optionText : this.optionMap.values()) {
-                String header = "(" + index + ") ";
-                gen.append(header).append(optionText).append("\n");
-                index ++;
+            for(String optionKey : this.optionMap.keySet()) {
+                String optionText = this.optionMap.get(optionKey);
+                String conditionals = this.ifOption.get(optionKey);
+                if(conditionals == null) {
+                    String header = "(" + index + ") ";
+                    gen.append(header).append(optionText).append("\n");
+                    index++;
+                }else{
+                    String args [] = conditionals.split(",");
+                    if(currentGamePath.inHistory(args[1], args[0])){
+                        String header = "(" + index + ") ";
+                        gen.append(header).append(optionText).append("\n");
+                        index++;
+                    }
+                }
             }
 
             return gen.toString();
@@ -132,9 +152,18 @@ public class Game {
             for(String key: this.optionMap.keySet()){
                 if(i == n)
                     return key;
+                i++;
             }
 
             return null;
+        }
+
+        public boolean hasTransferLink(){
+            return this.transferLink != null;
+        }
+
+        public String getTransferLink(){
+            return this.transferLink;
         }
     }
 
@@ -147,9 +176,13 @@ public class Game {
             this.optionSelected = new ArrayList<>();
         }
 
-        public void add(String id, String op){
-            this.listOfNodeIdentifiers.add(id);
+        public void add(Node currentNode, String op){
+            this.listOfNodeIdentifiers.add(currentNode.getNodeIdentifier());
             this.optionSelected.add(op);
+        }
+
+        public boolean inHistory(String id, String op){
+            return this.listOfNodeIdentifiers.contains(id) && this.optionSelected.contains(op);
         }
     }
 }
