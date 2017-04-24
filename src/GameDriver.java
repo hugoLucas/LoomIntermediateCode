@@ -1,7 +1,7 @@
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
-/**
+/*
  * Using a Game object, this class will handle the output to the terminal as well as the user's input.
  *
  * Created by hugoj on 4/21/2017.
